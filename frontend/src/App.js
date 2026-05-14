@@ -21,6 +21,10 @@ import QuoteGenerator from './pages/ai/QuoteGenerator';
 import SummaryGenerator from './pages/ai/SummaryGenerator';
 import TitleGenerator from './pages/ai/TitleGenerator';
 import MemoryEnhancer from './pages/ai/MemoryEnhancer';
+import TimelineGenerator from './pages/ai/TimelineGenerator';
+import RelationshipMapper from './pages/ai/RelationshipMapper';
+import ComparisonHighlight from './pages/ai/ComparisonHighlight';
+import PublicBook from './pages/PublicBook';
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -44,6 +48,18 @@ function AppLayout({ children }) {
 function App() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/';
+  const isPublicPage = location.pathname.startsWith('/public/');
+
+  // Public pages - no auth, no sidebar
+  if (isPublicPage) {
+    return (
+      <>
+        <Routes>
+          <Route path="/public/books/:token" element={<PublicBook />} />
+        </Routes>
+      </>
+    );
+  }
 
   if (isLoginPage) {
     return (
@@ -77,6 +93,9 @@ function App() {
         <Route path="/ai/summary" element={<ProtectedRoute><SummaryGenerator /></ProtectedRoute>} />
         <Route path="/ai/titles" element={<ProtectedRoute><TitleGenerator /></ProtectedRoute>} />
         <Route path="/ai/enhance" element={<ProtectedRoute><MemoryEnhancer /></ProtectedRoute>} />
+        <Route path="/ai/timeline" element={<ProtectedRoute><TimelineGenerator /></ProtectedRoute>} />
+        <Route path="/ai/relationships" element={<ProtectedRoute><RelationshipMapper /></ProtectedRoute>} />
+        <Route path="/ai/comparison" element={<ProtectedRoute><ComparisonHighlight /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
       <ToastContainer />

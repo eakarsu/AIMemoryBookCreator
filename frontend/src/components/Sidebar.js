@@ -34,6 +34,9 @@ function Sidebar() {
     { to: '/ai/summary', icon: '📊', label: 'Summary Generator' },
     { to: '/ai/titles', icon: '✏️', label: 'Title Generator' },
     { to: '/ai/enhance', icon: '✨', label: 'Memory Enhancer' },
+    { to: '/ai/timeline', icon: '📅', label: 'Timeline Generator' },
+    { to: '/ai/relationships', icon: '🌳', label: 'Relationship Mapper' },
+    { to: '/ai/comparison', icon: '🔍', label: 'Comparison Highlight' },
   ];
 
   const renderLinks = (links) =>

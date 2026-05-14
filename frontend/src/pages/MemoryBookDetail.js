@@ -5,6 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { showToast } from '../components/Toast';
 
 const API = 'http://localhost:3001/api';
+const PAGE_SIZE = 10;
 
 function MemoryBookDetail() {
   const { id } = useParams();
@@ -14,34 +15,59 @@ function MemoryBookDetail() {
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', cover_color: '#6366f1' });
+  const [shareUrl, setShareUrl] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const headers = {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${localStorage.getItem('token')}`,
   };
 
+  const fetchBook = async () => {
+    try {
+      const bookRes = await fetch(`${API}/memory-books/${id}`, { headers });
+      const bookData = await bookRes.json();
+      setBook(bookData);
+      setForm({ title: bookData.title, description: bookData.description || '', cover_color: bookData.cover_color || '#6366f1' });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchMemories = async (pageNum = 1) => {
+    try {
+      const memRes = await fetch(`${API}/memories?book_id=${id}&page=${pageNum}&limit=${PAGE_SIZE}`, { headers });
+      const memData = await memRes.json();
+      if (memData.data) {
+        setMemories(memData.data);
+        setTotalPages(memData.pagination.totalPages);
+      } else {
+        setMemories(Array.isArray(memData) ? memData : []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const [bookRes, memRes] = await Promise.all([
-          fetch(`${API}/memory-books/${id}`, { headers }),
-          fetch(`${API}/memories?book_id=${id}`, { headers }),
-        ]);
-        const bookData = await bookRes.json();
-        const memData = await memRes.json();
-        setBook(bookData);
-        setForm({ title: bookData.title, description: bookData.description || '', cover_color: bookData.cover_color || '#6366f1' });
-        setMemories(Array.isArray(memData) ? memData : []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+      await Promise.all([fetchBook(), fetchMemories(1)]);
+      setLoading(false);
     };
     fetchData();
     // eslint-disable-next-line
   }, [id]);
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    fetchMemories(newPage);
+  };
 
   const handleUpdate = async () => {
     try {
@@ -70,6 +96,58 @@ function MemoryBookDetail() {
     }
   };
 
+  const handleShare = async () => {
+    try {
+      const res = await fetch(`${API}/memory-books/${id}/share`, { method: 'POST', headers });
+      if (!res.ok) throw new Error('Failed to generate share link');
+      const data = await res.json();
+      setShareUrl(data.share_url);
+      setShowShare(true);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const handleInvite = async () => {
+    if (!inviteEmail) return showToast('Email is required', 'error');
+    try {
+      const res = await fetch(`${API}/memory-books/${id}/invite`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ email: inviteEmail, role: 'contributor' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to invite');
+      showToast(`Collaborator invited!`, 'success');
+      setInviteEmail('');
+      setShowInvite(false);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExportingPdf(true);
+    try {
+      const res = await fetch(`${API}/memory-books/${id}/export-pdf`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `memory-book-${id}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      showToast('PDF exported!', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
   if (loading) return <LoadingSpinner />;
   if (!book) return <div className="empty-state"><div className="empty-state-title">Book not found</div></div>;
 
@@ -87,6 +165,11 @@ function MemoryBookDetail() {
           <p className="page-subtitle">{book.description || 'No description'}</p>
         </div>
         <div className="detail-actions">
+          <button className="btn btn-secondary btn-sm" onClick={handleShare}>Share</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => setShowInvite(true)}>Invite</button>
+          <button className="btn btn-secondary btn-sm" onClick={handleExportPdf} disabled={exportingPdf}>
+            {exportingPdf ? 'Exporting...' : 'Export PDF'}
+          </button>
           <button className="btn btn-secondary btn-sm" onClick={() => setShowEdit(true)}>Edit</button>
           <button className="btn btn-danger btn-sm" onClick={() => setShowDelete(true)}>Delete</button>
         </div>
@@ -102,6 +185,12 @@ function MemoryBookDetail() {
             <div className="detail-meta-label">Memories</div>
             <div className="detail-meta-value">{memories.length}</div>
           </div>
+          {book.is_public && (
+            <div className="detail-meta-item">
+              <div className="detail-meta-label">Status</div>
+              <div className="detail-meta-value" style={{ color: '#22c55e' }}>Public</div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -117,32 +206,83 @@ function MemoryBookDetail() {
             <div className="empty-state-text">No memories in this book yet</div>
           </div>
         ) : (
-          <div className="data-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Date</th>
-                  <th>Emotion</th>
-                </tr>
-              </thead>
-              <tbody>
-                {memories.map((mem) => (
-                  <tr key={mem.id} onClick={() => navigate(`/memories/${mem.id}`)}>
-                    <td className="data-table-title">{mem.title}</td>
-                    <td>{mem.memory_date ? new Date(mem.memory_date).toLocaleDateString() : '-'}</td>
-                    <td>
-                      {mem.emotion && (
-                        <span className={`emotion-badge emotion-${mem.emotion}`}>{mem.emotion}</span>
-                      )}
-                    </td>
+          <>
+            <div className="data-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Date</th>
+                    <th>Emotion</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {memories.map((mem) => (
+                    <tr key={mem.id} onClick={() => navigate(`/memories/${mem.id}`)}>
+                      <td className="data-table-title">{mem.title}</td>
+                      <td>{mem.memory_date ? new Date(mem.memory_date).toLocaleDateString() : '-'}</td>
+                      <td>
+                        {mem.emotion && (
+                          <span className={`emotion-badge emotion-${mem.emotion}`}>{mem.emotion}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '16px' }}>
+                <button className="btn btn-secondary btn-sm" onClick={() => handlePageChange(page - 1)} disabled={page === 1}>
+                  &larr; Prev
+                </button>
+                <span style={{ alignSelf: 'center', fontSize: '0.9rem', color: '#666' }}>
+                  Page {page} of {totalPages}
+                </span>
+                <button className="btn btn-secondary btn-sm" onClick={() => handlePageChange(page + 1)} disabled={page === totalPages}>
+                  Next &rarr;
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
+
+      {/* Share Modal */}
+      <Modal isOpen={showShare} onClose={() => setShowShare(false)} title="Share Memory Book">
+        <p>Your book is now public. Share this link:</p>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input
+            className="form-input"
+            value={shareUrl}
+            readOnly
+            style={{ flex: 1 }}
+          />
+          <button className="btn btn-primary btn-sm" onClick={() => { navigator.clipboard.writeText(shareUrl); showToast('Link copied!', 'success'); }}>
+            Copy
+          </button>
+        </div>
+      </Modal>
+
+      {/* Invite Collaborator Modal */}
+      <Modal isOpen={showInvite} onClose={() => setShowInvite(false)} title="Invite Collaborator" footer={
+        <>
+          <button className="btn btn-secondary" onClick={() => setShowInvite(false)}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleInvite}>Invite</button>
+        </>
+      }>
+        <div className="form-group">
+          <label className="form-label">Collaborator Email</label>
+          <input
+            className="form-input"
+            type="email"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            placeholder="email@example.com"
+          />
+        </div>
+      </Modal>
 
       <Modal isOpen={showEdit} onClose={() => setShowEdit(false)} title="Edit Memory Book" footer={
         <>

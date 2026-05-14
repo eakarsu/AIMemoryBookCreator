@@ -4,6 +4,79 @@ import { showToast } from '../../components/Toast';
 
 const API = 'http://localhost:3001/api';
 
+const EMOTION_COLORS = {
+  happy: '#f59e0b', sad: '#3b82f6', nostalgic: '#8b5cf6', excited: '#ec4899',
+  peaceful: '#10b981', grateful: '#f59e0b', proud: '#ef4444', amused: '#f97316',
+  reflective: '#6366f1', hopeful: '#10b981', joy: '#f59e0b', love: '#ec4899',
+  anger: '#ef4444', fear: '#6b7280', surprise: '#8b5cf6',
+};
+
+function StructuredSentiment({ data }) {
+  if (!data || typeof data === 'string') {
+    return <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.9rem', color: '#333' }}>{data}</pre>;
+  }
+
+  const score = typeof data.score === 'number' ? data.score : null;
+  const scoreColor = score != null ? (score >= 7 ? '#22c55e' : score >= 4 ? '#f59e0b' : '#ef4444') : '#6366f1';
+  const emotionKey = (data.emotion || '').toLowerCase();
+  const emotionColor = EMOTION_COLORS[emotionKey] || '#6366f1';
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Emotion badge + score gauge */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+        {data.emotion && (
+          <span style={{
+            background: `${emotionColor}22`, color: emotionColor, border: `1px solid ${emotionColor}55`,
+            padding: '6px 18px', borderRadius: '20px', fontWeight: 700, fontSize: '1.05rem', textTransform: 'capitalize'
+          }}>
+            {data.emotion}
+          </span>
+        )}
+        {score != null && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '160px', height: '10px', background: '#e5e7eb',
+              borderRadius: '5px', overflow: 'hidden'
+            }}>
+              <div style={{
+                width: `${(score / 10) * 100}%`, height: '100%',
+                background: scoreColor, borderRadius: '5px',
+                transition: 'width 0.4s ease'
+              }} />
+            </div>
+            <span style={{ fontWeight: 700, color: scoreColor, fontSize: '1rem' }}>{score}/10</span>
+          </div>
+        )}
+      </div>
+
+      {/* Tone */}
+      {data.tone && (
+        <p style={{ color: '#555', fontStyle: 'italic', margin: 0, lineHeight: '1.6' }}>
+          {data.tone}
+        </p>
+      )}
+
+      {/* Themes */}
+      {Array.isArray(data.themes) && data.themes.length > 0 && (
+        <div>
+          <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#888', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Emotional Themes
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {data.themes.map((t, i) => (
+              <span key={i} style={{
+                background: '#ede9fe', color: '#6366f1',
+                padding: '3px 12px', borderRadius: '14px', fontSize: '0.88rem'
+              }}>{typeof t === 'string' ? t : JSON.stringify(t)}</span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SentimentAnalyzer() {
   const [text, setText] = useState('');
   const [result, setResult] = useState(null);
@@ -24,78 +97,12 @@ function SentimentAnalyzer() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Analysis failed');
-      setResult(data);
+      setResult(data.result);
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
       setLoading(false);
     }
-  };
-
-  const renderResult = () => {
-    if (!result) return null;
-    const data = result.result || result;
-
-    // If result is a parsed JSON object from sentiment analysis
-    const isObj = typeof data === 'object' && data !== null;
-    const sentiment = isObj ? (data.emotion || data.overall_sentiment || data.sentiment || 'N/A') : 'N/A';
-    const score = isObj ? (data.score || data.confidence || 'N/A') : 'N/A';
-    const emotions = isObj ? (data.themes || data.emotions || []) : [];
-    const summary = isObj ? (data.tone || data.summary || data.analysis || '') : (typeof data === 'string' ? data : '');
-
-    const emotionColors = {
-      happy: '#f59e0b', sad: '#3b82f6', nostalgic: '#8b5cf6', excited: '#ec4899',
-      peaceful: '#10b981', grateful: '#f59e0b', proud: '#ef4444', amused: '#f97316',
-      reflective: '#6366f1', hopeful: '#10b981', joy: '#f59e0b', love: '#ec4899',
-      anger: '#ef4444', fear: '#6b7280', surprise: '#8b5cf6',
-    };
-
-    return (
-      <div className="ai-result-card">
-        <div className="ai-result-label">Sentiment Analysis</div>
-
-        <div className="ai-sentiment-display">
-          <div className="ai-sentiment-item">
-            <div className="ai-sentiment-item-label">Overall Sentiment</div>
-            <div className="ai-sentiment-item-value" style={{ color: 'var(--primary)', textTransform: 'capitalize' }}>
-              {typeof sentiment === 'string' ? sentiment : JSON.stringify(sentiment)}
-            </div>
-          </div>
-          <div className="ai-sentiment-item">
-            <div className="ai-sentiment-item-label">Confidence Score</div>
-            <div className="ai-sentiment-item-value" style={{ color: 'var(--secondary)' }}>
-              {typeof score === 'number' ? `${Math.round(score * 100)}%` : score}
-            </div>
-          </div>
-        </div>
-
-        {Array.isArray(emotions) && emotions.length > 0 && (
-          <div style={{ marginTop: '20px' }}>
-            <div className="ai-sentiment-item-label" style={{ marginBottom: '10px' }}>Detected Emotions</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {emotions.map((em, i) => {
-                const name = typeof em === 'string' ? em : em.name || em.emotion || '';
-                return (
-                  <span key={i} className="emotion-badge" style={{
-                    background: `${emotionColors[name.toLowerCase()] || '#6366f1'}20`,
-                    color: emotionColors[name.toLowerCase()] || '#6366f1',
-                  }}>
-                    {name}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {summary && (
-          <div style={{ marginTop: '20px' }}>
-            <div className="ai-sentiment-item-label" style={{ marginBottom: '8px' }}>Analysis</div>
-            <div className="ai-output" style={{ fontSize: '0.95rem' }}>{summary}</div>
-          </div>
-        )}
-      </div>
-    );
   };
 
   return (
@@ -122,7 +129,13 @@ function SentimentAnalyzer() {
       </div>
 
       {loading && <LoadingSpinner text="Analyzing emotions..." />}
-      {result && !loading && renderResult()}
+
+      {result && !loading && (
+        <div className="ai-result-card">
+          <div className="ai-result-label">Sentiment Analysis</div>
+          <StructuredSentiment data={result} />
+        </div>
+      )}
     </div>
   );
 }

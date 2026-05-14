@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -6,6 +6,55 @@ import { showToast } from '../components/Toast';
 
 const API = 'http://localhost:3001/api';
 const EMOTIONS = ['happy', 'sad', 'nostalgic', 'excited', 'peaceful', 'grateful', 'proud', 'amused', 'reflective', 'hopeful'];
+
+function SentimentDisplay({ result }) {
+  if (!result || typeof result === 'string') return <pre style={{ whiteSpace: 'pre-wrap' }}>{result}</pre>;
+
+  const scoreColor = result.score >= 7 ? '#22c55e' : result.score >= 4 ? '#f59e0b' : '#ef4444';
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+        {result.emotion && (
+          <span style={{
+            background: '#6366f1', color: '#fff', padding: '4px 14px',
+            borderRadius: '20px', fontWeight: 600, fontSize: '0.95rem'
+          }}>
+            {result.emotion}
+          </span>
+        )}
+        {result.score != null && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{
+              width: '120px', height: '8px', background: '#e5e7eb',
+              borderRadius: '4px', overflow: 'hidden'
+            }}>
+              <div style={{
+                width: `${(result.score / 10) * 100}%`, height: '100%',
+                background: scoreColor, borderRadius: '4px'
+              }} />
+            </div>
+            <span style={{ fontWeight: 700, color: scoreColor }}>{result.score}/10</span>
+          </div>
+        )}
+      </div>
+      {result.tone && <p style={{ color: '#555', fontStyle: 'italic', margin: 0 }}>{result.tone}</p>}
+      {result.themes && result.themes.length > 0 && (
+        <div>
+          <div style={{ fontWeight: 600, marginBottom: '6px', fontSize: '0.85rem', color: '#888' }}>Themes</div>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {result.themes.map((t, i) => (
+              <span key={i} style={{
+                background: '#ede9fe', color: '#6366f1',
+                padding: '2px 10px', borderRadius: '12px', fontSize: '0.85rem'
+              }}>{t}</span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function MemoryDetail() {
   const { id } = useParams();
@@ -17,45 +66,47 @@ function MemoryDetail() {
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [form, setForm] = useState({});
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [analyzingPhoto, setAnalyzingPhoto] = useState(false);
+  const [photoAnalysis, setPhotoAnalysis] = useState(null);
+  const fileInputRef = useRef(null);
 
   const headers = {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${localStorage.getItem('token')}`,
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [memRes, bookRes, catRes] = await Promise.all([
-          fetch(`${API}/memories/${id}`, { headers }),
-          fetch(`${API}/memory-books`, { headers }),
-          fetch(`${API}/categories`, { headers }),
-        ]);
-        const memData = await memRes.json();
-        const bookData = await bookRes.json();
-        const catData = await catRes.json();
-        setMemory(memData);
-        setBooks(Array.isArray(bookData) ? bookData : []);
-        setCategories(Array.isArray(catData) ? catData : []);
-        setForm({
-          title: memData.title || '',
-          content: memData.content || '',
-          book_id: memData.book_id || '',
-          memory_date: memData.memory_date ? memData.memory_date.split('T')[0] : '',
-          location: memData.location || '',
-          emotion: memData.emotion || '',
-          category_id: memData.category_id || '',
-          is_favorite: memData.is_favorite || false,
-        });
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-    // eslint-disable-next-line
-  }, [id]);
+  const fetchMemory = async () => {
+    try {
+      const [memRes, bookRes, catRes] = await Promise.all([
+        fetch(`${API}/memories/${id}`, { headers }),
+        fetch(`${API}/memory-books`, { headers }),
+        fetch(`${API}/categories`, { headers }),
+      ]);
+      const memData = await memRes.json();
+      const bookData = await bookRes.json();
+      const catData = await catRes.json();
+      setMemory(memData);
+      setBooks(Array.isArray(bookData) ? bookData : []);
+      setCategories(Array.isArray(catData) ? catData : []);
+      setForm({
+        title: memData.title || '',
+        content: memData.content || '',
+        book_id: memData.book_id || '',
+        memory_date: memData.memory_date ? memData.memory_date.split('T')[0] : '',
+        location: memData.location || '',
+        emotion: memData.emotion || '',
+        category_id: memData.category_id || '',
+        is_favorite: memData.is_favorite || false,
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchMemory(); /* eslint-disable-next-line */ }, [id]);
 
   const handleUpdate = async () => {
     try {
@@ -84,6 +135,48 @@ function MemoryDetail() {
       navigate('/memories');
     } catch (err) {
       showToast(err.message, 'error');
+    }
+  };
+
+  const handleUploadPhoto = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const res = await fetch(`${API}/memories/${id}/upload-photo`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      setMemory((m) => ({ ...m, photo_url: data.photo_url }));
+      showToast('Photo uploaded!', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleAnalyzePhoto = async () => {
+    setAnalyzingPhoto(true);
+    setPhotoAnalysis(null);
+    try {
+      const res = await fetch(`${API}/memories/${id}/analyze-photo`, {
+        method: 'POST',
+        headers,
+      });
+      if (!res.ok) throw new Error('Analysis failed');
+      const data = await res.json();
+      setPhotoAnalysis(data.analysis);
+      showToast('Photo analyzed!', 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setAnalyzingPhoto(false);
     }
   };
 
@@ -134,6 +227,55 @@ function MemoryDetail() {
             <div className="detail-meta-value">{new Date(memory.created_at).toLocaleDateString()}</div>
           </div>
         </div>
+      </div>
+
+      {/* Photo section */}
+      <div className="detail-section">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <div className="detail-section-title">Photo</div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/jpeg,image/png" onChange={handleUploadPhoto} />
+            <button className="btn btn-secondary btn-sm" onClick={() => fileInputRef.current.click()} disabled={uploadingPhoto}>
+              {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
+            </button>
+            {memory.photo_url && (
+              <button className="btn btn-primary btn-sm" onClick={handleAnalyzePhoto} disabled={analyzingPhoto}>
+                {analyzingPhoto ? 'Analyzing...' : 'AI Analyze Photo'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {memory.photo_url && (
+          <div>
+            <img
+              src={`http://localhost:3001${memory.photo_url}`}
+              alt="Memory"
+              style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px', objectFit: 'cover', marginBottom: '12px' }}
+            />
+          </div>
+        )}
+
+        {photoAnalysis && (
+          <div style={{ background: '#f8f7ff', border: '1px solid #e0dcff', borderRadius: '8px', padding: '16px', marginTop: '8px' }}>
+            <div style={{ fontWeight: 600, color: '#6366f1', marginBottom: '10px' }}>AI Photo Analysis</div>
+            {photoAnalysis.scene_description && <p><strong>Scene:</strong> {photoAnalysis.scene_description}</p>}
+            {photoAnalysis.estimated_date_period && <p><strong>Estimated Period:</strong> {photoAnalysis.estimated_date_period}</p>}
+            {photoAnalysis.people_count != null && <p><strong>People:</strong> {photoAnalysis.people_count}</p>}
+            {photoAnalysis.mood && <p><strong>Mood:</strong> {photoAnalysis.mood}</p>}
+            {photoAnalysis.suggested_caption && (
+              <div style={{ marginTop: '8px', padding: '8px', background: '#ede9fe', borderRadius: '6px' }}>
+                <strong>Suggested Caption:</strong> {photoAnalysis.suggested_caption}
+              </div>
+            )}
+            {photoAnalysis.memory_prompt && (
+              <div style={{ marginTop: '8px', fontStyle: 'italic', color: '#6366f1' }}>
+                <strong>Memory Prompt:</strong> {photoAnalysis.memory_prompt}
+              </div>
+            )}
+            {photoAnalysis.raw && <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.85rem' }}>{photoAnalysis.raw}</pre>}
+          </div>
+        )}
       </div>
 
       {memory.content && (
