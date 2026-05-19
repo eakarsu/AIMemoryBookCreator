@@ -6,6 +6,7 @@ import { showToast } from '../components/Toast';
 
 const API = 'http://localhost:3001/api';
 const EMOTIONS = ['happy', 'sad', 'nostalgic', 'excited', 'peaceful', 'grateful', 'proud', 'amused', 'reflective', 'hopeful'];
+const PAGE_SIZE = 15;
 
 function Memories() {
   const navigate = useNavigate();
@@ -14,6 +15,8 @@ function Memories() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [form, setForm] = useState({
     title: '', content: '', book_id: '', memory_date: '', location: '',
     emotion: '', category_id: '', is_favorite: false,
@@ -24,25 +27,48 @@ function Memories() {
     Authorization: `Bearer ${localStorage.getItem('token')}`,
   };
 
+  const fetchMemories = async (pageNum = 1) => {
+    try {
+      const res = await fetch(`${API}/memories?page=${pageNum}&limit=${PAGE_SIZE}`, { headers });
+      const data = await res.json();
+      if (data.data) {
+        setMemories(data.data);
+        setTotalPages(data.pagination.totalPages);
+      } else {
+        setMemories(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const fetchData = async () => {
     try {
-      const [memRes, bookRes, catRes] = await Promise.all([
-        fetch(`${API}/memories`, { headers }),
+      const [bookRes, catRes] = await Promise.all([
         fetch(`${API}/memory-books`, { headers }),
         fetch(`${API}/categories`, { headers }),
       ]);
-      const [memData, bookData, catData] = await Promise.all([memRes.json(), bookRes.json(), catRes.json()]);
-      setMemories(Array.isArray(memData) ? memData : []);
+      const [bookData, catData] = await Promise.all([bookRes.json(), catRes.json()]);
       setBooks(Array.isArray(bookData) ? bookData : []);
       setCategories(Array.isArray(catData) ? catData : []);
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 
-  useEffect(() => { fetchData(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => {
+    const init = async () => {
+      await Promise.all([fetchMemories(1), fetchData()]);
+      setLoading(false);
+    };
+    init();
+    // eslint-disable-next-line
+  }, []);
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    fetchMemories(newPage);
+  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -59,7 +85,7 @@ function Memories() {
       showToast('Memory created!', 'success');
       setShowModal(false);
       setForm({ title: '', content: '', book_id: '', memory_date: '', location: '', emotion: '', category_id: '', is_favorite: false });
-      fetchData();
+      fetchMemories(page);
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -86,36 +112,52 @@ function Memories() {
           <div className="empty-state-text">Start capturing your precious moments.</div>
         </div>
       ) : (
-        <div className="data-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Date</th>
-                <th>Location</th>
-                <th>Emotion</th>
-                <th>Favorite</th>
-              </tr>
-            </thead>
-            <tbody>
-              {memories.map((mem) => (
-                <tr key={mem.id} onClick={() => navigate(`/memories/${mem.id}`)}>
-                  <td className="data-table-title">{mem.title}</td>
-                  <td>{mem.memory_date ? new Date(mem.memory_date).toLocaleDateString() : '-'}</td>
-                  <td>{mem.location || '-'}</td>
-                  <td>
-                    {mem.emotion && <span className={`emotion-badge emotion-${mem.emotion}`}>{mem.emotion}</span>}
-                  </td>
-                  <td>
-                    <span className={`favorite-star ${mem.is_favorite ? '' : 'inactive'}`}>
-                      {mem.is_favorite ? '★' : '☆'}
-                    </span>
-                  </td>
+        <>
+          <div className="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Date</th>
+                  <th>Location</th>
+                  <th>Emotion</th>
+                  <th>Favorite</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {memories.map((mem) => (
+                  <tr key={mem.id} onClick={() => navigate(`/memories/${mem.id}`)}>
+                    <td className="data-table-title">{mem.title}</td>
+                    <td>{mem.memory_date ? new Date(mem.memory_date).toLocaleDateString() : '-'}</td>
+                    <td>{mem.location || '-'}</td>
+                    <td>
+                      {mem.emotion && <span className={`emotion-badge emotion-${mem.emotion}`}>{mem.emotion}</span>}
+                    </td>
+                    <td>
+                      <span className={`favorite-star ${mem.is_favorite ? '' : 'inactive'}`}>
+                        {mem.is_favorite ? '★' : '☆'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '16px' }}>
+              <button className="btn btn-secondary btn-sm" onClick={() => handlePageChange(page - 1)} disabled={page === 1}>
+                &larr; Prev
+              </button>
+              <span style={{ alignSelf: 'center', fontSize: '0.9rem', color: '#666' }}>
+                Page {page} of {totalPages}
+              </span>
+              <button className="btn btn-secondary btn-sm" onClick={() => handlePageChange(page + 1)} disabled={page === totalPages}>
+                Next &rarr;
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Create Memory" footer={

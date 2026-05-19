@@ -8,6 +8,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [stats, setStats] = useState({});
+  const [sharedBooks, setSharedBooks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const headers = {
@@ -18,18 +19,9 @@ function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const endpoints = [
-          'memory-books',
-          'memories',
-          'categories',
-          'tags',
-          'milestones',
-          'templates',
-        ];
+        const endpoints = ['memory-books', 'memories', 'categories', 'tags', 'milestones', 'templates'];
         const results = await Promise.allSettled(
-          endpoints.map((ep) =>
-            fetch(`${API}/${ep}`, { headers }).then((r) => r.json())
-          )
+          endpoints.map((ep) => fetch(`${API}/${ep}`, { headers }).then((r) => r.json()))
         );
         const counts = {};
         endpoints.forEach((ep, i) => {
@@ -41,6 +33,13 @@ function Dashboard() {
           }
         });
         setStats(counts);
+
+        // Fetch shared books
+        try {
+          const sharedRes = await fetch(`${API}/memory-books/shared-with-me`, { headers });
+          const sharedData = await sharedRes.json();
+          setSharedBooks(Array.isArray(sharedData) ? sharedData : []);
+        } catch (_) {}
       } catch (err) {
         console.error('Failed to fetch stats:', err);
       } finally {
@@ -105,20 +104,37 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* Shared With Me */}
+      {sharedBooks.length > 0 && (
+        <div style={{ marginBottom: '32px' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#333', marginBottom: '12px' }}>
+            Shared With Me
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+            {sharedBooks.map((b) => (
+              <div
+                key={b.id}
+                className="feature-card"
+                onClick={() => navigate(`/memory-books/${b.id}`)}
+                style={{ borderTop: `4px solid ${b.cover_color || '#6366f1'}` }}
+              >
+                <span className="feature-card-icon">📚</span>
+                <div className="feature-card-title">{b.title}</div>
+                <div className="feature-card-description">{b.role} · {b.memory_count || 0} memories</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="dashboard-grid">
         {features.map((f) => (
-          <div
-            key={f.path}
-            className="feature-card"
-            onClick={() => navigate(f.path)}
-          >
+          <div key={f.path} className="feature-card" onClick={() => navigate(f.path)}>
             <span className="feature-card-icon">{f.icon}</span>
             <div className="feature-card-title">{f.title}</div>
             <div className="feature-card-description">{f.desc}</div>
             {f.countKey && stats[f.countKey] !== undefined && (
-              <div className="feature-card-count">
-                {stats[f.countKey]} items
-              </div>
+              <div className="feature-card-count">{stats[f.countKey]} items</div>
             )}
           </div>
         ))}
