@@ -13,6 +13,7 @@ function Sidebar() {
 
   const mainLinks = [
     { to: '/dashboard', icon: '🏠', label: 'Dashboard' },
+    { to: '/custom-views', icon: '🖼️', label: 'Memory Views' },
   ];
 
   const libraryLinks = [

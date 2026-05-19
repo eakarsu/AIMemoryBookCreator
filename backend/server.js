@@ -55,6 +55,9 @@ app.use('/api/templates', require('./routes/templates'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/public', require('./routes/public'));
 
+// Custom Views (4 endpoints: timeline, heatmap, pdf, themes CRUD) — mounted BEFORE 404
+app.use('/api/custom-views', require('./routes/customViews'));
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -93,3 +96,8 @@ try { const _gap_email_sms = require('./routes/gap-email-sms'); app.use('/api/ga
 try { const _gap_webhooks = require('./routes/gap-webhooks'); app.use('/api/gap-webhooks', _gap_webhooks); } catch(e) { console.error('gap mount fail webhooks:', e.message); }
 try { const _gap_mobile = require('./routes/gap-mobile'); app.use('/api/gap-mobile', _gap_mobile); } catch(e) { console.error('gap mount fail mobile:', e.message); }
 // === End Batch 05 Mounts ===
+
+// Final 404 fallback for unknown /api/* routes (registered LAST, after all mounts)
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'Not found', path: req.originalUrl });
+});
