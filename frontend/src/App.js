@@ -24,8 +24,14 @@ import MemoryEnhancer from './pages/ai/MemoryEnhancer';
 import TimelineGenerator from './pages/ai/TimelineGenerator';
 import RelationshipMapper from './pages/ai/RelationshipMapper';
 import ComparisonHighlight from './pages/ai/ComparisonHighlight';
+import HeritageGapFinder from './pages/HeritageGapFinder';
 import PublicBook from './pages/PublicBook';
 import CustomViewsPage from './pages/CustomViewsPage';
+
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
+
+import TimelineView from './pages/TimelineView';
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -56,6 +62,10 @@ function App() {
     return (
       <>
         <Routes>
+        <Route path="/insights/timeline" element={<ProtectedRoute><TimelineView /></ProtectedRoute>} />
+        <Route path="/codex/custom-viz" element={<ProtectedRoute><CodexCustomVizFeature /></ProtectedRoute>} />
+        <Route path="/codex/operations" element={<ProtectedRoute><CodexOperationsFeature /></ProtectedRoute>} />
+
           <Route path="/public/books/:token" element={<PublicBook />} />
         </Routes>
       </>
@@ -97,6 +107,7 @@ function App() {
         <Route path="/ai/timeline" element={<ProtectedRoute><TimelineGenerator /></ProtectedRoute>} />
         <Route path="/ai/relationships" element={<ProtectedRoute><RelationshipMapper /></ProtectedRoute>} />
         <Route path="/ai/comparison" element={<ProtectedRoute><ComparisonHighlight /></ProtectedRoute>} />
+        <Route path="/ai/heritage-gaps" element={<ProtectedRoute><HeritageGapFinder /></ProtectedRoute>} />
         <Route path="/custom-views" element={<ProtectedRoute><CustomViewsPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

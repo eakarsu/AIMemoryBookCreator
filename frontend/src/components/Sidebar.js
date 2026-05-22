@@ -38,6 +38,7 @@ function Sidebar() {
     { to: '/ai/timeline', icon: '📅', label: 'Timeline Generator' },
     { to: '/ai/relationships', icon: '🌳', label: 'Relationship Mapper' },
     { to: '/ai/comparison', icon: '🔍', label: 'Comparison Highlight' },
+    { to: '/ai/heritage-gaps', icon: '🧭', label: 'Heritage Gaps' },
   ];
 
   const renderLinks = (links) =>

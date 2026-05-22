@@ -54,6 +54,7 @@ app.use('/api/milestones', require('./routes/milestones'));
 app.use('/api/templates', require('./routes/templates'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/public', require('./routes/public'));
+app.use('/api/heritage-gap-finder', require('./routes/heritageGapFinder'));
 
 // Custom Views (4 endpoints: timeline, heatmap, pdf, themes CRUD) — mounted BEFORE 404
 app.use('/api/custom-views', require('./routes/customViews'));

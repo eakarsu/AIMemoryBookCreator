@@ -25,7 +25,7 @@ async function callOpenRouter(prompt, maxTokens = 1000) {
       'X-Title': 'AI Memory Book Creator'
     },
     body: JSON.stringify({
-      model: 'anthropic/claude-3-5-sonnet-20241022',
+      model: process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: prompt }

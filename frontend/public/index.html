@@ -13,5 +13,23 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <script>
+      (function(){
+        var FROM = 'http://localhost:3001';
+        var TO = 'http://localhost:4501';
+        var _fetch = window.fetch;
+        window.fetch = function(input, init){
+          if (typeof input === 'string' && input.indexOf(FROM) === 0) input = TO + input.slice(FROM.length);
+          else if (input && input.url && input.url.indexOf(FROM) === 0) input = new Request(TO + input.url.slice(FROM.length), input);
+          return _fetch(input, init);
+        };
+        var _open = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(m, u){
+          if (typeof u === 'string' && u.indexOf(FROM) === 0) u = TO + u.slice(FROM.length);
+          arguments[1] = u;
+          return _open.apply(this, arguments);
+        };
+      })();
+    </script>
   </body>
 </html>
