@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const pool = require('../db');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'memory-book-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '7d';
 
 // Ensure reset_token columns exist
