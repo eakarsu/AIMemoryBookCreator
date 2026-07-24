@@ -37,8 +37,8 @@ function Login() {
   };
 
   const handleDemoLogin = () => {
-    setEmail('demo@memorybook.com');
-    setPassword('password123');
+    setEmail(process.env.REACT_APP_DEMO_EMAIL || '');
+    setPassword(process.env.REACT_APP_DEMO_PASSWORD || '');
     setTimeout(() => {
       document.getElementById('login-form').requestSubmit();
     }, 100);
