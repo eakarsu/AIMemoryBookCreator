@@ -19,7 +19,7 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 const allowedOrigins = String(process.env.CORS_ORIGINS || process.env.CLIENT_URL || 'http://localhost:3000').split(',').map((value) => value.trim()).filter(Boolean);
 app.use(cors({ origin:(origin,callback)=>!origin||allowedOrigins.includes(origin)?callback(null,true):callback(new Error('Origin not allowed by CORS')),credentials:true }));
 app.use(express.json({ limit: '10mb' }));
-app.use(createProviderGate(['/api/ai','/api/life-story-interviewer','/api/vision-memory-enhance','/api/text-to-video-stream','/api/family-legacy-workflow','/api/memory-book-marketplace']));
+app.use(createProviderGate(['/api/life-story-interviewer','/api/vision-memory-enhance','/api/text-to-video-stream','/api/family-legacy-workflow','/api/memory-book-marketplace']));
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

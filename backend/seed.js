@@ -4,6 +4,13 @@ const path = require('path');
 
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
+if (process.env.ALLOW_DEMO_SEED !== 'true' || process.env.NODE_ENV === 'production') {
+  throw new Error('Demo seed is quarantined; set ALLOW_DEMO_SEED=true outside production');
+}
+if (!process.env.DEMO_SEED_PASSWORD || process.env.DEMO_SEED_PASSWORD.length < 12) {
+  throw new Error('DEMO_SEED_PASSWORD must contain at least 12 characters');
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
@@ -135,13 +142,14 @@ async function seed() {
 
     // ── Seed Demo User ───────────────────────────────────────────────
     log.step('Creating demo user...');
-    const hashedPassword = bcrypt.hashSync('password123', 10);
+    const demoEmail = process.env.DEMO_EMAIL || 'runtime-admin@example.com';
+    const hashedPassword = bcrypt.hashSync(process.env.DEMO_SEED_PASSWORD, 10);
     const userResult = await client.query(
       `INSERT INTO users (email, password, name, avatar_url) VALUES ($1, $2, $3, $4) RETURNING id`,
-      ['demo@memorybook.com', hashedPassword, 'Demo User', null]
+      [demoEmail, hashedPassword, 'Runtime Admin', null]
     );
     const userId = userResult.rows[0].id;
-    log.success(`Demo user created (id: ${userId}) - email: demo@memorybook.com / password: password123`);
+    log.success(`Demo user created (id: ${userId}) for ${demoEmail}`);
 
     // ── Seed Memory Books ────────────────────────────────────────────
     log.step('Creating 15 memory books...');
@@ -434,7 +442,7 @@ async function seed() {
     log.done('====================================');
     console.log('');
     log.info('Summary:');
-    log.info('  - 1 demo user (demo@memorybook.com / password123)');
+    log.info(`  - 1 demo user (${demoEmail})`);
     log.info('  - 15 memory books');
     log.info('  - 15 categories');
     log.info(`  - ${memoriesData.length} memories`);

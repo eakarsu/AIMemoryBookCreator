@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const API = 'http://localhost:3001/api';
+const API = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 function MemoryTimelineView() {
   const [data, setData] = useState(null);

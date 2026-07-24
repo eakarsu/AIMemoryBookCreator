@@ -4,7 +4,7 @@ import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { showToast } from '../components/Toast';
 
-const API = 'http://localhost:3001/api';
+const API = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 const EMOTIONS = ['happy', 'sad', 'nostalgic', 'excited', 'peaceful', 'grateful', 'proud', 'amused', 'reflective', 'hopeful'];
 
 function SentimentDisplay({ result }) {

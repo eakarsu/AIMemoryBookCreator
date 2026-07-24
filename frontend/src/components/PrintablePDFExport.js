@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const API = 'http://localhost:3001/api';
+const API = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 function PrintablePDFExport() {
   const [title, setTitle] = useState('My Memory Book');

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { showToast } from '../../components/Toast';
 
-const API = 'http://localhost:3001/api';
+const API = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 const EMOTION_COLORS = {
   happy: '#f59e0b', sad: '#3b82f6', nostalgic: '#8b5cf6', excited: '#ec4899',
