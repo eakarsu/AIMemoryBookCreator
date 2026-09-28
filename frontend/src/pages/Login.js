@@ -39,9 +39,6 @@ function Login() {
   const handleDemoLogin = () => {
     setEmail(process.env.REACT_APP_DEMO_EMAIL || '');
     setPassword(process.env.REACT_APP_DEMO_PASSWORD || '');
-    setTimeout(() => {
-      document.getElementById('login-form').requestSubmit();
-    }, 100);
   };
 
   return (
@@ -96,7 +93,7 @@ function Login() {
           onClick={handleDemoLogin}
           disabled={loading}
         >
-          Quick Demo Login
+          Auto Fill Demo Credentials
         </button>
       </div>
     </div>
