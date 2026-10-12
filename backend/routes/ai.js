@@ -262,15 +262,13 @@ router.post('/enhance-memory', async (req, res) => {
 router.post('/generate-timeline', async (req, res) => {
   try {
     const { memoryBookId } = req.body;
-    let memories = [];
-    try {
-      const where = memoryBookId
-        ? 'WHERE memory_book_id = $1 AND user_id = $2'
-        : 'WHERE user_id = $1';
+    let memories = Array.isArray(req.body.memories) ? req.body.memories : [];
+    if (memoryBookId || !memories.length) {
+      const where = memoryBookId ? 'WHERE book_id = $1 AND user_id = $2' : 'WHERE user_id = $1';
       const params = memoryBookId ? [memoryBookId, req.user.id] : [req.user.id];
-      const r = await pool.query(`SELECT id, title, content, memory_date, tags FROM memories ${where} ORDER BY memory_date ASC NULLS LAST LIMIT 200`, params);
+      const r = await pool.query(`SELECT id, title, content, memory_date FROM memories ${where} ORDER BY memory_date ASC NULLS LAST LIMIT 200`, params);
       memories = r.rows;
-    } catch (e) { /* table shape may differ */ }
+    }
 
     const prompt = `Build a chronological timeline from these memories. If exact dates are missing, group by inferred eras and order them as best as possible.
 
@@ -293,15 +291,13 @@ Return ONLY JSON: { "timeline": [{ "memory_id": any, "title": string, "approx_da
 router.post('/relationship-mapper', async (req, res) => {
   try {
     const { memoryBookId } = req.body;
-    let memories = [];
-    try {
-      const where = memoryBookId
-        ? 'WHERE memory_book_id = $1 AND user_id = $2'
-        : 'WHERE user_id = $1';
+    let memories = Array.isArray(req.body.memories) ? req.body.memories : [];
+    if (memoryBookId || !memories.length) {
+      const where = memoryBookId ? 'WHERE book_id = $1 AND user_id = $2' : 'WHERE user_id = $1';
       const params = memoryBookId ? [memoryBookId, req.user.id] : [req.user.id];
       const r = await pool.query(`SELECT id, title, content FROM memories ${where} LIMIT 200`, params);
       memories = r.rows;
-    } catch (e) { /* table shape may differ */ }
+    }
 
     const prompt = `Extract people mentioned in these memories and the relationships between them.
 

@@ -21,12 +21,14 @@ function Dashboard() {
       try {
         const endpoints = ['memory-books', 'memories', 'categories', 'tags', 'milestones', 'templates'];
         const results = await Promise.allSettled(
-          endpoints.map((ep) => fetch(`${API}/${ep}`, { headers }).then((r) => r.json()))
+          endpoints.map((ep) => fetch(`${API}/${ep}${ep === 'memories' ? '?page=1&limit=15' : ''}`, { headers }).then((r) => r.json()))
         );
         const counts = {};
         endpoints.forEach((ep, i) => {
           const result = results[i];
-          if (result.status === 'fulfilled' && Array.isArray(result.value)) {
+          if (ep === 'memories' && result.status === 'fulfilled' && Array.isArray(result.value?.data)) {
+            counts[ep] = Number(result.value.pagination?.total) || result.value.data.length;
+          } else if (result.status === 'fulfilled' && Array.isArray(result.value)) {
             counts[ep] = result.value.length;
           } else {
             counts[ep] = 0;

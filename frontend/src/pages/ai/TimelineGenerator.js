@@ -1,10 +1,20 @@
+import FormattedAIReport from "../../components/FormattedAIReport";
+
+import FullAIExamples, { useFullAIExamples } from "../../components/FullAIExamples.jsx";
 import React, { useState } from 'react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { showToast } from '../../components/Toast';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+const MEMORY_EXAMPLES = [
+  [{ title: 'Summer picnic', content: 'In July 1998, Grandma served peach cobbler at the lake while our cousins set up the picnic table.', memory_date: '1998-07-12' }],
+  [{ title: 'First school day', content: 'Dad walked me to the blue school door and our teacher asked me to arrange the classroom books.', memory_date: '2004-09-07' }],
+  [{ title: 'Family birthday', content: 'At Aunt May’s seventieth birthday dinner, we recorded the stories behind her old photographs.', memory_date: '2022-04-16' }],
+].map((memories) => JSON.stringify(memories));
 
 function TimelineGenerator() {
+  const fullAIExamples = useFullAIExamples();
+
   const [memoryBookId, setMemoryBookId] = useState('');
   const [memories, setMemories] = useState('');
   const [result, setResult] = useState(null);
@@ -47,7 +57,7 @@ function TimelineGenerator() {
   };
 
   return (
-    <div className="ai-page">
+    <div className="ai-page" data-full-ai-workspace="TimelineGenerator"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading)} />
       <div className="ai-page-header">
         <h1>AI Timeline Generator</h1>
         <p>Build a chronological timeline with era grouping and a narrative arc.</p>
@@ -61,7 +71,7 @@ function TimelineGenerator() {
             className="form-input"
             value={memoryBookId}
             onChange={(e) => setMemoryBookId(e.target.value)}
-            placeholder="Pull memories from a memory book"
+            placeholder="Pull memories from a memory book" data-full-ai-field={fullAIExamples.bind({ current: memoryBookId, change: (e) => setMemoryBookId(e.target.value), label: "memoryBookId", manual: false, json: false, sample: '' }, "p1-1857", undefined)}
           />
         </div>
         <div className="form-group">
@@ -71,7 +81,7 @@ function TimelineGenerator() {
             value={memories}
             onChange={(e) => setMemories(e.target.value)}
             placeholder={'1995 - Started college\n1999 - Graduated\n2001 - First job'}
-            style={{ minHeight: '180px' }}
+            style={{ minHeight: '180px' }} data-full-ai-field={fullAIExamples.bind({ current: memories, change: (e) => setMemories(e.target.value), label: "memories", manual: false, json: true, samples: MEMORY_EXAMPLES }, "p1-2248", undefined)}
           />
         </div>
         <button
@@ -88,10 +98,7 @@ function TimelineGenerator() {
       {result && !loading && (
         <div className="ai-result-card">
           <div className="ai-result-label">Generated Timeline</div>
-          <pre className="ai-output-story" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-            {JSON.stringify(result, null, 2)}
-          </pre>
-          <button className="ai-copy-btn" onClick={handleCopy}>Copy to clipboard</button>
+          <FormattedAIReport response={result} title="Generated Timeline" />
         </div>
       )}
     </div>

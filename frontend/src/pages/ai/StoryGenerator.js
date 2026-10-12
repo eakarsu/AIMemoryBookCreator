@@ -1,3 +1,6 @@
+import FormattedAIReport from "../../components/FormattedAIReport";
+
+import FullAIExamples, { useFullAIExamples } from "../../components/FullAIExamples.jsx";
 import React, { useState } from 'react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { showToast } from '../../components/Toast';
@@ -5,6 +8,8 @@ import { showToast } from '../../components/Toast';
 const API = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 function StoryGenerator() {
+  const fullAIExamples = useFullAIExamples();
+
   const [text, setText] = useState('');
   const [tone, setTone] = useState('warm');
   const [result, setResult] = useState(null);
@@ -47,7 +52,7 @@ function StoryGenerator() {
   };
 
   return (
-    <div className="ai-page">
+    <div className="ai-page" data-full-ai-workspace="StoryGenerator"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading)} />
       <div className="ai-page-header">
         <h1>AI Story Generator</h1>
         <p>Transform your memories into beautiful narratives</p>
@@ -61,12 +66,12 @@ function StoryGenerator() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Describe your memory in detail..."
-            style={{ minHeight: '150px' }}
+            style={{ minHeight: '150px' }} data-full-ai-field={fullAIExamples.bind({ current: text, change: (e) => setText(e.target.value), label: "text", manual: false, json: false, sample: '' }, "p1-1844", undefined)}
           />
         </div>
         <div className="form-group">
           <label className="form-label">Tone</label>
-          <select className="form-select" value={tone} onChange={(e) => setTone(e.target.value)}>
+          <select className="form-select" value={tone} onChange={(e) => setTone(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: tone, change: (e) => setTone(e.target.value), label: "tone", manual: false, json: false, sample: 'warm' }, "p1-2202", undefined)}>
             <option value="warm">Warm</option>
             <option value="dramatic">Dramatic</option>
             <option value="humorous">Humorous</option>
@@ -84,8 +89,7 @@ function StoryGenerator() {
       {result && !loading && (
         <div className="ai-result-card">
           <div className="ai-result-label">Generated Story</div>
-          <div className="ai-output-story">{getStoryText()}</div>
-          <button className="ai-copy-btn" onClick={handleCopy}>Copy to clipboard</button>
+          <FormattedAIReport response={result} title="Generated Story" />
         </div>
       )}
     </div>

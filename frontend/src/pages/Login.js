@@ -37,8 +37,15 @@ function Login() {
   };
 
   const handleDemoLogin = () => {
-    setEmail(process.env.REACT_APP_DEMO_EMAIL || '');
-    setPassword(process.env.REACT_APP_DEMO_PASSWORD || '');
+    const demoEmail = process.env.REACT_APP_DEMO_EMAIL;
+    const demoPassword = process.env.REACT_APP_DEMO_PASSWORD;
+    if (!demoEmail || !demoPassword) {
+      setError('Demo credentials are not configured for this app.');
+      return;
+    }
+    setError('');
+    setEmail(demoEmail);
+    setPassword(demoPassword);
   };
 
   return (
@@ -93,7 +100,7 @@ function Login() {
           onClick={handleDemoLogin}
           disabled={loading}
         >
-          Auto Fill Demo Credentials
+          Fill Demo Credentials
         </button>
       </div>
     </div>

@@ -10,7 +10,7 @@ if [ -f "$demo_credentials_project_dir/.env" ]; then
     demo_credentials_key="${demo_credentials_line%%=*}"
     demo_credentials_value="${demo_credentials_line#*=}"
     case "$demo_credentials_key" in
-      NODE_ENV|ENABLE_DEMO_CREDENTIAL_AUTOFILL|DEMO_EMAIL|DEMO_PASSWORD|SEED_ADMIN_EMAIL|SEED_ADMIN_PASSWORD|ADMIN_EMAIL|ADMIN_PASSWORD|DEFAULT_EMAIL|DEFAULT_PASSWORD) ;;
+      NODE_ENV|ENABLE_DEMO_CREDENTIAL_AUTOFILL|DEMO_EMAIL|DEMO_PASSWORD|DEMO_SEED_PASSWORD|SEED_ADMIN_EMAIL|SEED_ADMIN_PASSWORD|ADMIN_EMAIL|ADMIN_PASSWORD|DEFAULT_EMAIL|DEFAULT_PASSWORD) ;;
       *) continue ;;
     esac
     [ -n "${!demo_credentials_key+x}" ] && continue
@@ -24,7 +24,10 @@ if [ -f "$demo_credentials_project_dir/.env" ]; then
 fi
 demo_credentials_email=""
 demo_credentials_password=""
-if [ -n "${DEMO_EMAIL:-}" ] && [ -n "${DEMO_PASSWORD:-}" ]; then
+if [ -n "${DEMO_EMAIL:-}" ] && [ -n "${DEMO_SEED_PASSWORD:-}" ]; then
+  demo_credentials_email="$DEMO_EMAIL"
+  demo_credentials_password="$DEMO_SEED_PASSWORD"
+elif [ -n "${DEMO_EMAIL:-}" ] && [ -n "${DEMO_PASSWORD:-}" ]; then
   demo_credentials_email="$DEMO_EMAIL"
   demo_credentials_password="$DEMO_PASSWORD"
 elif [ -n "${SEED_ADMIN_EMAIL:-}" ] && [ -n "${SEED_ADMIN_PASSWORD:-}" ]; then

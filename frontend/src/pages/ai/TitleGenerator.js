@@ -1,3 +1,6 @@
+import FormattedAIReport from "../../components/FormattedAIReport";
+
+import FullAIExamples, { useFullAIExamples } from "../../components/FullAIExamples.jsx";
 import React, { useState } from 'react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { showToast } from '../../components/Toast';
@@ -5,6 +8,8 @@ import { showToast } from '../../components/Toast';
 const API = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 function TitleGenerator() {
+  const fullAIExamples = useFullAIExamples();
+
   const [text, setText] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -45,7 +50,7 @@ function TitleGenerator() {
   };
 
   return (
-    <div className="ai-page">
+    <div className="ai-page" data-full-ai-workspace="TitleGenerator"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading)} />
       <div className="ai-page-header">
         <h1>AI Title Generator</h1>
         <p>Create perfect titles for your memories</p>
@@ -59,7 +64,7 @@ function TitleGenerator() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Describe your memory and get creative title suggestions..."
-            style={{ minHeight: '120px' }}
+            style={{ minHeight: '120px' }} data-full-ai-field={fullAIExamples.bind({ current: text, change: (e) => setText(e.target.value), label: "text", manual: false, json: false, sample: '' }, "p1-1776", undefined)}
           />
         </div>
         <button className="btn btn-primary" onClick={handleGenerate} disabled={loading || !text.trim()}>
@@ -72,14 +77,7 @@ function TitleGenerator() {
       {result && !loading && (
         <div className="ai-result-card">
           <div className="ai-result-label">Suggested Titles</div>
-          <div className="ai-output-titles">
-            {getTitles().map((title, i) => (
-              <div key={i} className="ai-title-item" onClick={() => handleCopy(title)}>
-                {typeof title === 'string' ? title : title.text || JSON.stringify(title)}
-              </div>
-            ))}
-          </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--gray-400)', marginTop: '12px' }}>Click a title to copy</p>
+          <FormattedAIReport response={result} title="Suggested Titles" />
         </div>
       )}
     </div>

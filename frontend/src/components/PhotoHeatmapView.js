@@ -12,8 +12,9 @@ function PhotoHeatmapView() {
     fetch(`${API}/custom-views/heatmap`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.json())
+      .then(async (r) => { if (!r.ok) throw new Error(`Heatmap request failed (${r.status})`); return r.json(); })
       .then((d) => {
+        if (!Array.isArray(d.categories) || !Array.isArray(d.months) || d.categories.some((category) => !Array.isArray(category.counts))) throw new Error('Heatmap response is missing its category data');
         setData(d);
         setLoading(false);
       })

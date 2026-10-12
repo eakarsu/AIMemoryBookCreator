@@ -18,7 +18,7 @@ function PublicBook() {
         if (data.error) setError(data.error);
         else {
           setBook(data.book);
-          setMemories(data.memories || []);
+          setMemories(Array.isArray(data.memories) ? data.memories : []);
         }
       })
       .catch(() => setError('Failed to load book'))

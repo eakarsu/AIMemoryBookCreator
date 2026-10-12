@@ -1,3 +1,4 @@
+import FormattedAIReport from '../components/FormattedAIReport';
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
@@ -256,25 +257,8 @@ function MemoryDetail() {
           </div>
         )}
 
-        {photoAnalysis && (
-          <div style={{ background: '#f8f7ff', border: '1px solid #e0dcff', borderRadius: '8px', padding: '16px', marginTop: '8px' }}>
-            <div style={{ fontWeight: 600, color: '#6366f1', marginBottom: '10px' }}>AI Photo Analysis</div>
-            {photoAnalysis.scene_description && <p><strong>Scene:</strong> {photoAnalysis.scene_description}</p>}
-            {photoAnalysis.estimated_date_period && <p><strong>Estimated Period:</strong> {photoAnalysis.estimated_date_period}</p>}
-            {photoAnalysis.people_count != null && <p><strong>People:</strong> {photoAnalysis.people_count}</p>}
-            {photoAnalysis.mood && <p><strong>Mood:</strong> {photoAnalysis.mood}</p>}
-            {photoAnalysis.suggested_caption && (
-              <div style={{ marginTop: '8px', padding: '8px', background: '#ede9fe', borderRadius: '6px' }}>
-                <strong>Suggested Caption:</strong> {photoAnalysis.suggested_caption}
-              </div>
-            )}
-            {photoAnalysis.memory_prompt && (
-              <div style={{ marginTop: '8px', fontStyle: 'italic', color: '#6366f1' }}>
-                <strong>Memory Prompt:</strong> {photoAnalysis.memory_prompt}
-              </div>
-            )}
-            {photoAnalysis.raw && <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.85rem' }}>{photoAnalysis.raw}</pre>}
-          </div>
+        {photoAnalysis !== null && (
+          <FormattedAIReport response={photoAnalysis} title="AI Photo Analysis" />
         )}
       </div>
 

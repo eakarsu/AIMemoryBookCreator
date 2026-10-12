@@ -1,3 +1,6 @@
+import FormattedAIReport from "../../components/FormattedAIReport";
+
+import FullAIExamples, { useFullAIExamples } from "../../components/FullAIExamples.jsx";
 import React, { useState } from 'react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { showToast } from '../../components/Toast';
@@ -78,6 +81,8 @@ function StructuredSentiment({ data }) {
 }
 
 function SentimentAnalyzer() {
+  const fullAIExamples = useFullAIExamples();
+
   const [text, setText] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -106,7 +111,7 @@ function SentimentAnalyzer() {
   };
 
   return (
-    <div className="ai-page">
+    <div className="ai-page" data-full-ai-workspace="SentimentAnalyzer"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading)} />
       <div className="ai-page-header">
         <h1>AI Sentiment Analysis</h1>
         <p>Understand the emotions in your memories</p>
@@ -120,7 +125,7 @@ function SentimentAnalyzer() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Paste or write your memory text to analyze..."
-            style={{ minHeight: '150px' }}
+            style={{ minHeight: '150px' }} data-full-ai-field={fullAIExamples.bind({ current: text, change: (e) => setText(e.target.value), label: "text", manual: false, json: false, sample: '' }, "p1-4332", undefined)}
           />
         </div>
         <button className="btn btn-primary" onClick={handleAnalyze} disabled={loading || !text.trim()}>
@@ -133,7 +138,7 @@ function SentimentAnalyzer() {
       {result && !loading && (
         <div className="ai-result-card">
           <div className="ai-result-label">Sentiment Analysis</div>
-          <StructuredSentiment data={result} />
+          <FormattedAIReport response={result} title="Sentiment Analysis" />
         </div>
       )}
     </div>

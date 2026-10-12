@@ -31,9 +31,9 @@ function Memories() {
     try {
       const res = await fetch(`${API}/memories?page=${pageNum}&limit=${PAGE_SIZE}`, { headers });
       const data = await res.json();
-      if (data.data) {
+      if (Array.isArray(data?.data)) {
         setMemories(data.data);
-        setTotalPages(data.pagination.totalPages);
+        setTotalPages(Number(data.pagination?.totalPages) || 1);
       } else {
         setMemories(Array.isArray(data) ? data : []);
       }

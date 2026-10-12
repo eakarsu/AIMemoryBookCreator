@@ -1,3 +1,6 @@
+import FormattedAIReport from "../../components/FormattedAIReport";
+
+import FullAIExamples, { useFullAIExamples } from "../../components/FullAIExamples.jsx";
 import React, { useState } from 'react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { showToast } from '../../components/Toast';
@@ -5,6 +8,8 @@ import { showToast } from '../../components/Toast';
 const API = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 function MemoryEnhancer() {
+  const fullAIExamples = useFullAIExamples();
+
   const [text, setText] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -45,7 +50,7 @@ function MemoryEnhancer() {
   };
 
   return (
-    <div className="ai-page">
+    <div className="ai-page" data-full-ai-workspace="MemoryEnhancer"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading)} />
       <div className="ai-page-header">
         <h1>AI Memory Enhancer</h1>
         <p>Enrich and expand your memories with vivid detail</p>
@@ -59,7 +64,7 @@ function MemoryEnhancer() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Write your memory here and let AI enhance it with richer detail..."
-            style={{ minHeight: '150px' }}
+            style={{ minHeight: '150px' }} data-full-ai-field={fullAIExamples.bind({ current: text, change: (e) => setText(e.target.value), label: "text", manual: false, json: false, sample: '' }, "p1-1745", undefined)}
           />
         </div>
         <button className="btn btn-primary" onClick={handleGenerate} disabled={loading || !text.trim()}>
@@ -72,17 +77,7 @@ function MemoryEnhancer() {
       {result && !loading && (
         <div className="ai-result-card">
           <div className="ai-result-label">Memory Enhancement</div>
-          <div className="ai-enhancer-comparison">
-            <div className="ai-enhancer-column original">
-              <div className="ai-enhancer-column-title">Original</div>
-              <div className="ai-output" style={{ fontSize: '0.9rem' }}>{text}</div>
-            </div>
-            <div className="ai-enhancer-column enhanced">
-              <div className="ai-enhancer-column-title">Enhanced</div>
-              <div className="ai-output" style={{ fontSize: '0.9rem' }}>{getEnhanced()}</div>
-            </div>
-          </div>
-          <button className="ai-copy-btn" onClick={handleCopy}>Copy enhanced version</button>
+          <FormattedAIReport response={result} title="Memory Enhancement" />
         </div>
       )}
     </div>

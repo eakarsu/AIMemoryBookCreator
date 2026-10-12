@@ -1,3 +1,6 @@
+import FormattedAIReport from "../../components/FormattedAIReport";
+
+import FullAIExamples, { useFullAIExamples } from "../../components/FullAIExamples.jsx";
 import React, { useState } from 'react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { showToast } from '../../components/Toast';
@@ -5,6 +8,8 @@ import { showToast } from '../../components/Toast';
 const API = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 function QuoteGenerator() {
+  const fullAIExamples = useFullAIExamples();
+
   const [theme, setTheme] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -45,7 +50,7 @@ function QuoteGenerator() {
   };
 
   return (
-    <div className="ai-page">
+    <div className="ai-page" data-full-ai-workspace="QuoteGenerator"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading)} />
       <div className="ai-page-header">
         <h1>AI Quote Generator</h1>
         <p>Generate inspirational quotes from memory themes</p>
@@ -58,7 +63,7 @@ function QuoteGenerator() {
             className="form-input"
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
-            placeholder="e.g. family love, childhood adventures, friendship..."
+            placeholder="e.g. family love, childhood adventures, friendship..." data-full-ai-field={fullAIExamples.bind({ current: theme, change: (e) => setTheme(e.target.value), label: "theme", manual: false, json: false, sample: '' }, "p1-1700", undefined)}
           />
         </div>
         <button className="btn btn-primary" onClick={handleGenerate} disabled={loading || !theme.trim()}>
@@ -71,8 +76,7 @@ function QuoteGenerator() {
       {result && !loading && (
         <div className="ai-result-card">
           <div className="ai-result-label">Generated Quote</div>
-          <div className="ai-output-quote">{getQuote()}</div>
-          <button className="ai-copy-btn" onClick={handleCopy}>Copy to clipboard</button>
+          <FormattedAIReport response={result} title="Generated Quote" />
         </div>
       )}
     </div>

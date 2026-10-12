@@ -1,3 +1,6 @@
+import FormattedAIReport from "../../components/FormattedAIReport";
+
+import FullAIExamples, { useFullAIExamples } from "../../components/FullAIExamples.jsx";
 import React, { useState } from 'react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { showToast } from '../../components/Toast';
@@ -5,6 +8,8 @@ import { showToast } from '../../components/Toast';
 const API = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 function PoetryGenerator() {
+  const fullAIExamples = useFullAIExamples();
+
   const [text, setText] = useState('');
   const [style, setStyle] = useState('free verse');
   const [result, setResult] = useState(null);
@@ -46,7 +51,7 @@ function PoetryGenerator() {
   };
 
   return (
-    <div className="ai-page">
+    <div className="ai-page" data-full-ai-workspace="PoetryGenerator"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading)} />
       <div className="ai-page-header">
         <h1>AI Poetry Generator</h1>
         <p>Turn your memories into beautiful poems</p>
@@ -60,12 +65,12 @@ function PoetryGenerator() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Describe your memory to transform into poetry..."
-            style={{ minHeight: '120px' }}
+            style={{ minHeight: '120px' }} data-full-ai-field={fullAIExamples.bind({ current: text, change: (e) => setText(e.target.value), label: "text", manual: false, json: false, sample: '' }, "p1-1773", undefined)}
           />
         </div>
         <div className="form-group">
           <label className="form-label">Poetry Style</label>
-          <select className="form-select" value={style} onChange={(e) => setStyle(e.target.value)}>
+          <select className="form-select" value={style} onChange={(e) => setStyle(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: style, change: (e) => setStyle(e.target.value), label: "style", manual: false, json: false, sample: 'free verse' }, "p1-2154", undefined)}>
             <option value="haiku">Haiku</option>
             <option value="sonnet">Sonnet</option>
             <option value="free verse">Free Verse</option>
@@ -83,8 +88,7 @@ function PoetryGenerator() {
       {result && !loading && (
         <div className="ai-result-card">
           <div className="ai-result-label">Generated Poem</div>
-          <div className="ai-output-poem">{getPoem()}</div>
-          <button className="ai-copy-btn" onClick={handleCopy}>Copy to clipboard</button>
+          <FormattedAIReport response={result} title="Generated Poem" />
         </div>
       )}
     </div>

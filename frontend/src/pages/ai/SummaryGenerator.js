@@ -1,3 +1,6 @@
+import FormattedAIReport from "../../components/FormattedAIReport";
+
+import FullAIExamples, { useFullAIExamples } from "../../components/FullAIExamples.jsx";
 import React, { useState } from 'react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { showToast } from '../../components/Toast';
@@ -5,6 +8,8 @@ import { showToast } from '../../components/Toast';
 const API = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 function SummaryGenerator() {
+  const fullAIExamples = useFullAIExamples();
+
   const [text, setText] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -45,7 +50,7 @@ function SummaryGenerator() {
   };
 
   return (
-    <div className="ai-page">
+    <div className="ai-page" data-full-ai-workspace="SummaryGenerator"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading)} />
       <div className="ai-page-header">
         <h1>AI Summary Generator</h1>
         <p>Summarize your memory collections into concise overviews</p>
@@ -59,7 +64,7 @@ function SummaryGenerator() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Paste multiple memories or a long description to summarize..."
-            style={{ minHeight: '180px' }}
+            style={{ minHeight: '180px' }} data-full-ai-field={fullAIExamples.bind({ current: text, change: (e) => setText(e.target.value), label: "text", manual: false, json: false, sample: '' }, "p1-1804", undefined)}
           />
         </div>
         <button className="btn btn-primary" onClick={handleGenerate} disabled={loading || !text.trim()}>
@@ -72,8 +77,7 @@ function SummaryGenerator() {
       {result && !loading && (
         <div className="ai-result-card">
           <div className="ai-result-label">Generated Summary</div>
-          <div className="ai-output" style={{ lineHeight: '1.9' }}>{getSummary()}</div>
-          <button className="ai-copy-btn" onClick={handleCopy}>Copy to clipboard</button>
+          <FormattedAIReport response={result} title="Generated Summary" />
         </div>
       )}
     </div>

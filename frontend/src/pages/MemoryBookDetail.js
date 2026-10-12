@@ -5,7 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { showToast } from '../components/Toast';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 15;
 
 function MemoryBookDetail() {
   const { id } = useParams();
@@ -44,9 +44,9 @@ function MemoryBookDetail() {
     try {
       const memRes = await fetch(`${API}/memories?book_id=${id}&page=${pageNum}&limit=${PAGE_SIZE}`, { headers });
       const memData = await memRes.json();
-      if (memData.data) {
+      if (Array.isArray(memData?.data)) {
         setMemories(memData.data);
-        setTotalPages(memData.pagination.totalPages);
+        setTotalPages(Number(memData.pagination?.totalPages) || 1);
       } else {
         setMemories(Array.isArray(memData) ? memData : []);
       }

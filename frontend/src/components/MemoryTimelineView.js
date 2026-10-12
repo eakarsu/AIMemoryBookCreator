@@ -12,8 +12,9 @@ function MemoryTimelineView() {
     fetch(`${API}/custom-views/timeline`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.json())
+      .then(async (r) => { if (!r.ok) throw new Error(`Timeline request failed (${r.status})`); return r.json(); })
       .then((d) => {
+        if (!Array.isArray(d.timeline) || d.timeline.some((group) => !Array.isArray(group.events))) throw new Error('Timeline response is missing its events');
         setData(d);
         setLoading(false);
       })
