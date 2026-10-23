@@ -69,6 +69,7 @@ app.use('/api/heritage-gap-finder', require('./routes/heritageGapFinder'));
 
 // Custom Views (4 endpoints: timeline, heatmap, pdf, themes CRUD) — mounted BEFORE 404
 app.use('/api/custom-views', require('./routes/customViews'));
+app.use('/api/tasks', require('./routes/tasksFeaturePack').createTasksRouter({ auth: require('./middleware/auth.js') }));
 app.use('/api/governed-memory-corpus', governanceRouter);
 
 // Health check
